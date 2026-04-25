@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 CITY = "Stockholm"
 COUNTRY = "Sweden"
 YEAR = 2026
-OUTPUT_FILE = "stockholm-sweden.ics"
+OUTPUT_FILE = "stockholm-routine.ics"
 
 url = f"https://api.aladhan.com/v1/calendarByCity?city={CITY}&country={COUNTRY}&method=2&year={YEAR}"
 data = requests.get(url).json()["data"]
@@ -26,9 +26,12 @@ DTEND:{fmt(end)}
 END:VEVENT
 """
 
+def add_minutes(dt, mins):
+    return dt + timedelta(minutes=mins)
+
 cal = """BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Salah Routine Calendar//EN
+PRODID:-//Daily Deen Routine//EN
 CALSCALE:GREGORIAN
 """
 
@@ -42,27 +45,57 @@ for d in data:
     maghrib = to_dt(date_str, t["Maghrib"])
     isha = to_dt(date_str, t["Isha"])
 
-    def plus(dt, mins):
-        return dt + timedelta(minutes=mins)
+    base_date = datetime.strptime(date_str, "%d-%m-%Y")
 
     day_id = date_str.replace("-", "")
 
-    # Fajr block
-    cal += event(f"{day_id}-fajr", "Fajr", fajr, plus(fajr, 10))
-    cal += event(f"{day_id}-adhkar-am", "Morning Adhkar", plus(fajr, 10), plus(fajr, 25))
-    cal += event(f"{day_id}-quran-am", "Qur’an (Morning)", plus(fajr, 25), plus(fajr, 45))
+    # --- FAJR BLOCK ---
+    fajr_end = add_minutes(fajr, 20)
+    cal += event(f"{day_id}-fajr", "Fajr Prayer", fajr, fajr_end)
 
-    # Dhuhr & Asr
-    cal += event(f"{day_id}-dhuhr", "Dhuhr", dhuhr, plus(dhuhr, 10))
-    cal += event(f"{day_id}-asr", "Asr", asr, plus(asr, 10))
+    adhkar_am_end = add_minutes(fajr_end, 15)
+    cal += event(f"{day_id}-adhkar-am", "Morning Dhikr", fajr_end, adhkar_am_end)
 
-    # Maghrib + family
-    cal += event(f"{day_id}-maghrib", "Maghrib", maghrib, plus(maghrib, 10))
-    cal += event(f"{day_id}-family", "Family Qur’an Time", plus(maghrib, 10), plus(maghrib, 30))
+    quran_am_end = add_minutes(adhkar_am_end, 20)
+    cal += event(f"{day_id}-quran-am", "Quran Study", adhkar_am_end, quran_am_end)
 
-    # Isha + evening
-    cal += event(f"{day_id}-isha", "Isha", isha, plus(isha, 10))
-    cal += event(f"{day_id}-adhkar-pm", "Evening Adhkar", plus(isha, 10), plus(isha, 25))
+    # --- SCHOOL DROP ---
+    school_drop = base_date.replace(hour=8, minute=0)
+    cal += event(f"{day_id}-school-drop", "School Drop", school_drop, add_minutes(school_drop, 10))
+
+    # --- DHUHR ---
+    dhuhr_end = add_minutes(dhuhr, 25)
+    cal += event(f"{day_id}-dhuhr", "Dhuhr Prayer", dhuhr, dhuhr_end)
+
+    # --- SCHOOL PICKUP ---
+    school_pick = base_date.replace(hour=14, minute=0)
+    cal += event(f"{day_id}-school-pick", "School Pickup", school_pick, add_minutes(school_pick, 10))
+
+    # --- ASR ---
+    asr_end = add_minutes(asr, 20)
+    cal += event(f"{day_id}-asr", "Asr Prayer", asr, asr_end)
+
+    # --- FAMILY TIME (AFTER ASR → BEFORE MAGHRIB) ---
+    family_start = asr_end
+    family_end = add_minutes(family_start, 90)  # 1.5 hours
+
+    # Make sure it doesn't overlap Maghrib
+    if family_end > maghrib:
+        family_end = maghrib
+
+    cal += event(f"{day_id}-family", "Family Time", family_start, family_end)
+
+    # --- MAGHRIB ---
+    maghrib_end = add_minutes(maghrib, 20)
+    cal += event(f"{day_id}-maghrib", "Maghrib Prayer", maghrib, maghrib_end)
+
+    # --- ISHA ---
+    isha_end = add_minutes(isha, 20)
+    cal += event(f"{day_id}-isha", "Isha Prayer", isha, isha_end)
+
+    # --- EVENING ADHKAR ---
+    adhkar_pm_end = add_minutes(isha_end, 15)
+    cal += event(f"{day_id}-adhkar-pm", "Evening Dhikr", isha_end, adhkar_pm_end)
 
 cal += "END:VCALENDAR"
 
