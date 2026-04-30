@@ -271,6 +271,22 @@ CONTENT = {
             (0, "Gym time - a strong believer is better!"),
         ],
     ),
+    "kahf": dict(
+        summary="Surah Al-Kahf 📖",
+        category="WORSHIP",
+        priority=2,
+        description=(
+            "مَنْ قَرَأَ سُورَةَ الْكَهْفِ فِي يَوْمِ الْجُمُعَةِ أَضَاءَ لَهُ مِنَ النُّورِ\n"
+            "Whoever recites Surah Al-Kahf on Friday, a light will shine for him\n"
+            "between the two Fridays. — Prophet Muhammad ﷺ\n\n"
+            "Recite Surah Al-Kahf (Chapter 18) today — all 110 verses.\n"
+            "Reflect on the 4 stories: the People of the Cave, the Two Men,\n"
+            "Musa and Al-Khidr, and Dhul-Qarnayn."
+        ),
+        alarms=[
+            (0, "Friday — recite Surah Al-Kahf today 📖"),
+        ],
+    ),
     "jumu'ah": dict(
         summary="Jumu'ah Prayer 🕌",
         category="PRAYER",
@@ -368,6 +384,15 @@ def build_event(uid, key, start, end):
         f"COLOR:{COLORS.get(c['category'], 'teal')}",
         "STATUS:CONFIRMED",
         "TRANSP:OPAQUE",
+    ]
+    # Add Malmö location for prayer events so Apple Maps opens correctly
+    if c["category"] == "PRAYER":
+        lines += [
+            "LOCATION:Malmö\\, Sweden",
+            "X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=Malmö\\, Sweden;"
+            "X-APPLE-RADIUS=500;X-TITLE=Malmö:geo:55.6050,13.0038",
+        ]
+    lines += [
         fold_line(f"DESCRIPTION:{ics_escape(c['description'])}"),
     ]
     for trigger_mins, message in c["alarms"]:
@@ -470,6 +495,11 @@ for month in range(1, 13):   # January – December 2026 (full year)
         # ── Gym (Friday & Sunday after Isha) ─────────────────────────────────
         if weekday in (4, 6):
             parts.append(build_event(f"{day_id}-gym", "gym", isha_end, add_min(isha_end, 60)))
+
+        # ── Surah Al-Kahf reminder (Fridays — all-day event at 09:00) ────────
+        if weekday == 4:
+            kahf_start = base_date.replace(hour=9, minute=0)
+            parts.append(build_event(f"{day_id}-kahf", "kahf", kahf_start, add_min(kahf_start, 60)))
 
 # ── Islamic holidays 2026 (all-day VEVENT) ────────────────────────────────────
 # Dates are approximations based on moon-sighting; actual dates may shift ±1 day.
