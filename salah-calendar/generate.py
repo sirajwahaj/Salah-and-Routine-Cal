@@ -471,6 +471,81 @@ for month in range(1, 13):   # January – December 2026 (full year)
         if weekday in (4, 6):
             parts.append(build_event(f"{day_id}-gym", "gym", isha_end, add_min(isha_end, 60)))
 
+# ── Islamic holidays 2026 (all-day VEVENT) ────────────────────────────────────
+# Dates are approximations based on moon-sighting; actual dates may shift ±1 day.
+ISLAMIC_HOLIDAYS = [
+    # (YYYYMMDD,  summary,                      description)
+    ("20260109", "Islamic New Year 1448 AH 🌙",
+     "Ra's al-Sana al-Hijriyya — Islamic New Year.\n"
+     "Reflect on the Hijrah of the Prophet ﷺ from Mecca to Medina."),
+    ("20260119", "Ashura — 10th Muharram 🤲",
+     "The Prophet ﷺ fasted on this day and encouraged fasting on\n"
+     "9th & 10th Muharram (or 10th & 11th).\n"
+     "Fast today and the day before or after."),
+    ("20260319", "Mawlid al-Nabawi ﷺ",
+     "Birthday of the Prophet Muhammad ﷺ — 12th Rabi' al-Awwal.\n"
+     "Increase salawat: اللهم صل على محمد وعلى آل محمد"),
+    ("20260319", "Isra wal Mi'raj 🌙",
+     "The Night Journey and Ascension of the Prophet ﷺ.\n"
+     "Pray Qiyam al-Layl tonight and reflect on the gift of Salah."),
+    ("20260218", "Ramadan Begins 🌙",
+     "First day of Ramadan 1447 AH (approx).\n"
+     "رمضان مبارك — May Allah accept our fasting, prayers, and deeds.\n\n"
+     "• Pray Tarawih every night\n"
+     "• Increase Quran recitation\n"
+     "• Give sadaqah generously"),
+    ("20260319", "Last 10 Nights of Ramadan begin ✨",
+     "The last 10 nights of Ramadan — seek Laylat al-Qadr.\n"
+     "لَيْلَةُ الْقَدْرِ خَيْرٌ مِّنْ أَلْفِ شَهْرٍ\n"
+     "Laylat al-Qadr is better than a thousand months. (97:3)\n\n"
+     "Pray Qiyam, make I'tikaf if possible, make abundant du'a."),
+    ("20260328", "Laylat al-Qadr (27th Ramadan) ✨",
+     "The Night of Power — most likely on the odd nights of the last 10.\n"
+     "Pray all night: Allahuma innaka 'afuwwun tuhibbul 'afwa fa'fu 'anni."),
+    ("20260319", "Eid al-Fitr 🎉",
+     "عيد الفطر المبارك — Eid Mubarak!\n\n"
+     "• Perform ghusl, wear best clothes\n"
+     "• Eat before Eid prayer (Sunnah)\n"
+     "• Pay Zakat al-Fitr before prayer\n"
+     "• Attend Eid prayer at the masjid\n"
+     "• Visit family and spread joy"),
+    ("20260527", "Eid al-Fitr 1447 AH 🎉",
+     "عيد الفطر المبارك — Eid Mubarak! (approx date)\n\n"
+     "• Perform ghusl, wear best clothes\n"
+     "• Eat before Eid prayer (Sunnah)\n"
+     "• Pay Zakat al-Fitr before prayer\n"
+     "• Attend Eid prayer at the masjid"),
+    ("20260809", "Day of Arafah 🤲",
+     "9th Dhul Hijjah — the greatest day of the year.\n"
+     "Fast today — it expiates sins of the past and coming year.\n"
+     "Make abundant du'a, dhikr, and istighfar."),
+    ("20260810", "Eid al-Adha 1447 AH 🐑",
+     "عيد الأضحى المبارك — Eid al-Adha Mubarak! (approx date)\n\n"
+     "• Perform ghusl, wear best clothes\n"
+     "• Do NOT eat before Eid prayer\n"
+     "• Attend Eid prayer at the masjid\n"
+     "• Make Udhiyah (sacrifice) if able\n"
+     "• Distribute meat to family, neighbours, and the poor"),
+]
+
+for date_str, summary, description in ISLAMIC_HOLIDAYS:
+    uid = f"{date_str}-{summary[:12].lower().replace(' ', '-').replace('/', '')}@{UID_DOMAIN}"
+    lines = [
+        "BEGIN:VEVENT",
+        fold_line(f"UID:{uid}"),
+        f"DTSTAMP:{NOW_UTC}",
+        fold_line(f"SUMMARY:{ics_escape(summary)}"),
+        f"DTSTART;VALUE=DATE:{date_str}",
+        f"DTEND;VALUE=DATE:{date_str}",
+        "CATEGORIES:HOLIDAY",
+        "COLOR:red",
+        "PRIORITY:1",
+        "TRANSP:TRANSPARENT",
+        fold_line(f"DESCRIPTION:{ics_escape(description)}"),
+        "END:VEVENT",
+    ]
+    parts.append("\r\n".join(lines))
+
 parts.append("END:VCALENDAR")
 
 # RFC 5545 §3.1: CRLF line endings; newline='' so Python doesn't add extra CR
