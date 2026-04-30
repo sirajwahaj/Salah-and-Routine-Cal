@@ -23,6 +23,10 @@
 
   <!-- Favicon (emoji) -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕌</text></svg>" />
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1a6b38" />
   <style>
     :root {
       --green:   #1a6b38;
@@ -44,6 +48,36 @@
       background: #f0fdf4;
       color: var(--text);
       min-height: 100vh;
+    }
+
+    /* ── Dark mode ── */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --green:   #4ade80;
+        --green2:  #16a34a;
+        --emerald: #22c55e;
+        --light:   #052e16;
+        --text:    #f9fafb;
+        --muted:   #9ca3af;
+        --surface: #111827;
+        --border:  #1f2937;
+        --shadow:  0 4px 32px rgba(0,0,0,.4);
+      }
+      body { background: #030712; }
+      .url-box { border-color: #166534; }
+      .prayer-item { border-color: #166534; }
+      .prayer-item.next-prayer { background: linear-gradient(135deg, #052e16, #14532d); border-color: #22c55e; }
+      .btn-google { background: #1f2937; color: #f9fafb; border-color: #374151; }
+      header::after { background: #030712; }
+      .schedule tbody tr:hover td { background: #1f2937; }
+      .schedule td { border-color: #1f2937; }
+      .badge-prayer  { background: #052e16; color: #86efac; }
+      .badge-worship { background: #0c4a6e; color: #7dd3fc; }
+      .badge-family  { background: #431407; color: #fde68a; }
+      .badge-edu     { background: #2e1065; color: #c4b5fd; }
+      .badge-health  { background: #450a0a; color: #fca5a5; }
+      .card { border-color: #1f2937; }
+      .instructions-body { border-color: #166534; }
     }
 
     /* ── Header with Islamic geometric pattern ── */

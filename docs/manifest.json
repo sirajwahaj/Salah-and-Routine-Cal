@@ -1,0 +1,18 @@
+{
+  "name": "Daily Deen Routine — Malmö 2026",
+  "short_name": "Deen Routine",
+  "description": "Full-year Islamic daily routine calendar for Malmö, Sweden.",
+  "start_url": "/Salah-and-Routine-Cal/",
+  "display": "standalone",
+  "background_color": "#030712",
+  "theme_color": "#1a6b38",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕌</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
