@@ -480,6 +480,32 @@
     </div>
   </div>
 
+  <!-- ── Next prayer countdown card ── -->
+  <div class="card" id="countdown-card" style="display:none">
+    <div class="card-title"><span class="icon">⏱</span> Next prayer in</div>
+    <div id="countdown-display" style="text-align:center;padding:8px 0">
+      <div id="countdown-name" style="font-size:1.1rem;font-weight:700;color:var(--green);margin-bottom:4px"></div>
+      <div id="countdown-timer" style="font-size:3rem;font-weight:900;letter-spacing:-.04em;color:var(--text);font-variant-numeric:tabular-nums"></div>
+      <div id="countdown-athan" style="font-size:.85rem;color:var(--muted);margin-top:4px"></div>
+    </div>
+  </div>
+
+  <!-- ── QR code card ── -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📷</span> Scan to subscribe on mobile</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
+      <img id="qr-img"
+           src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&color=1a6b38&data=webcal%3A%2F%2Fsirajwahaj.github.io%2FSalah-and-Routine-Cal%2Fmalmo-sweden.ics"
+           alt="QR code to subscribe to the calendar"
+           width="200" height="200"
+           style="border-radius:12px;border:2px solid #bbf7d0" />
+      <p style="font-size:.84rem;color:var(--muted);text-align:center;max-width:320px;line-height:1.6">
+        Open your phone camera and point it at this QR code.<br>
+        Tap the notification to subscribe in Apple Calendar or Google Calendar.
+      </p>
+    </div>
+  </div>
+
   <!-- ── Daily schedule card ── -->
   <div class="card">
     <div class="card-title"><span class="icon">🗓</span> Daily schedule</div>
@@ -585,9 +611,41 @@
             <div class="p-arabic">${p.arabic}</div>
           </div>`;
       }).join("");
+
+      // Start countdown to the next prayer
+      startCountdown(times, nextKey);
     } catch (e) {
       grid.innerHTML = `<div class="prayer-loading">Could not load prayer times — check your connection.</div>`;
     }
+  }
+
+  function startCountdown(times, nextKey) {
+    const card  = document.getElementById("countdown-card");
+    const name  = document.getElementById("countdown-name");
+    const timer = document.getElementById("countdown-timer");
+    const athan = document.getElementById("countdown-athan");
+    const pInfo = PRAYERS.find(p => p.key === nextKey);
+    if (!pInfo) return;
+    card.style.display = "";
+
+    const [h, mn] = times[nextKey].split(":").map(Number);
+    const now     = new Date();
+    let target    = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, mn, 0);
+    if (target <= now) target.setDate(target.getDate() + 1);
+
+    name.textContent  = `${pInfo.label} — ${pInfo.arabic}`;
+    athan.textContent = `Athan at ${times[nextKey].split(" ")[0]}`;
+
+    function tick() {
+      const diff = target - new Date();
+      if (diff <= 0) { timer.textContent = "الله أكبر"; return; }
+      const hh = String(Math.floor(diff / 3600000)).padStart(2, "0");
+      const mm = String(Math.floor((diff % 3600000) / 60000)).padStart(2, "0");
+      const ss = String(Math.floor((diff % 60000) / 1000)).padStart(2, "0");
+      timer.textContent = `${hh}:${mm}:${ss}`;
+      requestAnimationFrame(tick);
+    }
+    tick();
   }
 
   loadPrayerTimes();
