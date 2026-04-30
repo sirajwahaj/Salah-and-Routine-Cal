@@ -1,105 +1,445 @@
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-CITY = "Stockholm"
-COUNTRY = "Sweden"
+# ── Configuration ──────────────────────────────────────────────────────────────
+LAT = 55.6050   # Malmö, Sweden
+LON = 13.0038
 YEAR = 2026
-OUTPUT_FILE = "stockholm-routine.ics"
+METHOD = 3       # Muslim World League (standard for Europe)
+OUTPUT_FILE = "malmo-sweden.ics"
+UID_DOMAIN = "deen-routine.malmo"   # globally-unique UID scope (RFC 5545 §3.8.4.7)
 
-url = f"https://api.aladhan.com/v1/calendarByCity?city={CITY}&country={COUNTRY}&method=2&year={YEAR}"
-data = requests.get(url).json()["data"]
+# Single UTC stamp for the whole generation run (RFC 5545 §3.8.7.2)
+NOW_UTC = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+# ── Timezone definition (Europe/Stockholm – CET/CEST) ─────────────────────────
+VTIMEZONE = """\
+BEGIN:VTIMEZONE
+TZID:Europe/Stockholm
+X-LIC-LOCATION:Europe/Stockholm
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
+END:STANDARD
+END:VTIMEZONE"""
+
+# ── Per-event content (summary, description, category, priority, alarms) ──────
+#   alarms: list of (trigger_minutes_offset, notification_text)
+#   trigger  0 = fires exactly at event start
+#   trigger -5 = fires 5 minutes before event start
+CONTENT = {
+    "fajr": dict(
+        summary="Fajr Prayer",
+        category="PRAYER",
+        priority=1,
+        description=(
+            "الصَّلَاةُ خَيْرٌ مِنَ النَّوْم\n"
+            "Prayer is better than sleep.\n\n"
+            "2 Rak'ah Sunnah + 2 Rak'ah Fard\n\n"
+            "After Salah:\n"
+            "SubhanAllah x33 | Alhamdulillah x33 | Allahu Akbar x34\n"
+            "Ayat Al-Kursi"
+        ),
+        alarms=[
+            (-5, "Fajr in 5 minutes - make wudu now"),
+            (0,  "FAJR TIME - Allahu Akbar! Rise and pray."),
+        ],
+    ),
+    "adhkar-am": dict(
+        summary="Azkar Sabah",
+        category="WORSHIP",
+        priority=2,
+        description=(
+            "Morning Remembrance - azkar al-sabah\n\n"
+            "Ayat Al-Kursi\n"
+            "Al-Ikhlas, Al-Falaq, An-Nas x3\n"
+            "Sayyid Al-Istighfar\n"
+            "Hasbiyallahu la ilaha illa hu x7\n"
+            "A'udhu bi kalimatillahi at-tammati min sharri ma khalaq x3"
+        ),
+        alarms=[
+            (0, "Azkar Sabah - start your morning remembrance now"),
+        ],
+    ),
+    "quran-am": dict(
+        summary="Surah Al-Baqara",
+        category="WORSHIP",
+        priority=2,
+        description=(
+            "Daily Quran portion before Sunrise\n\n"
+            "وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا\n"
+            "Recite the Quran with measured recitation. (73:4)\n\n"
+            "Focus on tajweed. Reflect on the meaning."
+        ),
+        alarms=[
+            (0, "Quran time - recite your portion before Sunrise"),
+        ],
+    ),
+    "school-drop": dict(
+        summary="School Drop-off",
+        category="FAMILY",
+        priority=5,
+        description=(
+            "Drop your son at school.\n\n"
+            "Du'a for leaving home:\n"
+            "Bismillah, tawakkaltu 'ala Allah,\n"
+            "wa la hawla wa la quwwata illa billah."
+        ),
+        alarms=[
+            (0, "School Drop-off - time to go"),
+        ],
+    ),
+    "dhuhr": dict(
+        summary="Dhuhr Prayer",
+        category="PRAYER",
+        priority=1,
+        description=(
+            "وَأَقِمِ الصَّلَاةَ لِذِكْرِي\n"
+            "Establish prayer for My remembrance. (20:14)\n\n"
+            "4 Rak'ah Sunnah + 4 Rak'ah Fard + 2 Rak'ah Sunnah\n\n"
+            "After Salah:\n"
+            "SubhanAllah x33 | Alhamdulillah x33 | Allahu Akbar x34"
+        ),
+        alarms=[
+            (-5, "Dhuhr in 5 minutes - prepare for prayer"),
+            (0,  "DHUHR TIME - Allahu Akbar!"),
+        ],
+    ),
+    "school-pick": dict(
+        summary="School Pickup",
+        category="FAMILY",
+        priority=5,
+        description=(
+            "Pick up your son from school.\n\n"
+            "Du'a for entering the home:\n"
+            "Allahumma inni as'aluka khayr al-mawlaj wa khayr al-makhraj."
+        ),
+        alarms=[
+            (0, "School Pickup - time to collect your son"),
+        ],
+    ),
+    "kids-dars": dict(
+        summary="Kids Dars",
+        category="EDUCATION",
+        priority=3,
+        description=(
+            "Islamic lesson with the children - 1 hour\n\n"
+            "Rotation topics:\n"
+            "- Seerah of the Prophet (peace be upon him)\n"
+            "- Aqeedah basics\n"
+            "- Fiqh for children\n"
+            "- Quran memorisation review\n"
+            "- Stories of the Sahabah (may Allah be pleased with them)"
+        ),
+        alarms=[
+            (-5, "Kids Dars in 5 minutes - prepare your materials"),
+            (0,  "Kids Dars - Islamic lesson time! Bismillah."),
+        ],
+    ),
+    "asr": dict(
+        summary="Asr Prayer",
+        category="PRAYER",
+        priority=1,
+        description=(
+            "حَافِظُوا عَلَى الصَّلَوَاتِ وَالصَّلَاةِ الْوُسْطَى\n"
+            "Guard strictly the prayers and the middle prayer. (2:238)\n\n"
+            "4 Rak'ah Fard\n\n"
+            "After Salah:\n"
+            "SubhanAllah x33 | Alhamdulillah x33 | Allahu Akbar x34"
+        ),
+        alarms=[
+            (-5, "Asr in 5 minutes - prepare for prayer"),
+            (0,  "ASR TIME - Allahu Akbar!"),
+        ],
+    ),
+    "quran-pm": dict(
+        summary="Quran Reading",
+        category="WORSHIP",
+        priority=2,
+        description=(
+            "Post-Asr Quran session - 25 minutes\n\n"
+            "Those who recite the Book of Allah and establish prayer\n"
+            "and spend from what We have provided for them...\n"
+            "they hope for a transaction that will never perish. (35:29)\n\n"
+            "Stay consistent - a little every day."
+        ),
+        alarms=[
+            (0, "Post-Asr Quran - 25 minutes of focused recitation"),
+        ],
+    ),
+    "family": dict(
+        summary="Family Time",
+        category="FAMILY",
+        priority=3,
+        description=(
+            "خَيْرُكُمْ خَيْرُكُمْ لِأَهْلِهِ\n"
+            "The best of you are those who are best to their families.\n"
+            "- Prophet Muhammad (peace be upon him)\n\n"
+            "Ideas:\n"
+            "- Quran recitation together\n"
+            "- Islamic stories for the kids\n"
+            "- Walk outdoors\n"
+            "- Dinner and conversation"
+        ),
+        alarms=[
+            (-5, "Family Time in 5 minutes - put the phone down"),
+            (0,  "Family Time - be fully present with your family"),
+        ],
+    ),
+    "maghrib": dict(
+        summary="Maghrib Prayer",
+        category="PRAYER",
+        priority=1,
+        description=(
+            "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً\n"
+            "Our Lord, give us good in this world and good in the Hereafter. (2:201)\n\n"
+            "3 Rak'ah Fard + 2 Rak'ah Sunnah\n\n"
+            "After Salah:\n"
+            "SubhanAllah x33 | Alhamdulillah x33 | Allahu Akbar x34\n"
+            "Ayat Al-Kursi"
+        ),
+        alarms=[
+            (-3, "Maghrib in 3 minutes - prepare for prayer"),
+            (0,  "MAGHRIB TIME - Allahu Akbar!"),
+        ],
+    ),
+    "adhkar-pm": dict(
+        summary="Azkar Masah",
+        category="WORSHIP",
+        priority=2,
+        description=(
+            "Evening Remembrance - azkar al-masa'\n\n"
+            "Ayat Al-Kursi\n"
+            "Al-Ikhlas, Al-Falaq, An-Nas x3\n"
+            "A'udhu bi kalimatillahi at-tammati min sharri ma khalaq x3\n"
+            "Istighfar x100\n"
+            "Allahumma bika amsayna wa bika asbahna..."
+        ),
+        alarms=[
+            (0, "Azkar Masah - evening remembrance after Maghrib"),
+        ],
+    ),
+    "isha": dict(
+        summary="Isha Prayer",
+        category="PRAYER",
+        priority=1,
+        description=(
+            "وَمِنَ اللَّيْلِ فَسَبِّحْهُ وَأَدْبَارَ السُّجُودِ\n"
+            "Glorify Him in the night and after prostration. (50:40)\n\n"
+            "4 Rak'ah Fard + 2 Rak'ah Sunnah + 3 Witr\n\n"
+            "After Salah:\n"
+            "SubhanAllah x33 | Alhamdulillah x33 | Allahu Akbar x34\n"
+            "Ayat Al-Kursi"
+        ),
+        alarms=[
+            (-5, "Isha in 5 minutes - prepare for prayer"),
+            (0,  "ISHA TIME - Allahu Akbar!"),
+        ],
+    ),
+    "gym": dict(
+        summary="Gym Session",
+        category="HEALTH",
+        priority=5,
+        description=(
+            "الْمُؤْمِنُ الْقَوِيُّ خَيْرٌ وَأَحَبُّ إِلَى اللهِ مِنَ الْمُؤْمِنِ الضَّعِيفِ\n"
+            "A strong believer is better and more beloved to Allah\n"
+            "than a weak believer. - Prophet Muhammad (peace be upon him)\n\n"
+            "Niyyah: stay healthy to worship Allah better.\n"
+            "Bismillah - let's go!"
+        ),
+        alarms=[
+            (0, "Gym time - a strong believer is better!"),
+        ],
+    ),
+}
+
+
+# ── ICS helpers ────────────────────────────────────────────────────────────────
 
 def to_dt(date_str, time_str):
-    clean_time = time_str.split(" ")[0]
-    return datetime.strptime(f"{date_str} {clean_time}", "%d-%m-%Y %H:%M")
+    clean = time_str.split(" ")[0]
+    return datetime.strptime(f"{date_str} {clean}", "%d-%m-%Y %H:%M")
+
 
 def fmt(dt):
     return dt.strftime("%Y%m%dT%H%M%S")
 
-def event(uid, summary, start, end):
-    return f"""BEGIN:VEVENT
-UID:{uid}
-DTSTAMP:{fmt(start)}
-SUMMARY:{summary}
-DTSTART:{fmt(start)}
-DTEND:{fmt(end)}
-END:VEVENT
-"""
 
-def add_minutes(dt, mins):
-    return dt + timedelta(minutes=mins)
+def add_min(dt, m):
+    return dt + timedelta(minutes=m)
 
-cal = """BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Daily Deen Routine//EN
-CALSCALE:GREGORIAN
-"""
 
-for d in data:
-    date_str = d["date"]["gregorian"]["date"]
-    t = d["timings"]
+def ics_escape(value):
+    """Escape special characters per RFC 5545 §3.3.11."""
+    return (
+        value
+        .replace("\\", "\\\\")
+        .replace(";", "\\;")
+        .replace(",", "\\,")
+        .replace("\n", "\\n")
+    )
 
-    fajr = to_dt(date_str, t["Fajr"])
-    dhuhr = to_dt(date_str, t["Dhuhr"])
-    asr = to_dt(date_str, t["Asr"])
-    maghrib = to_dt(date_str, t["Maghrib"])
-    isha = to_dt(date_str, t["Isha"])
 
-    base_date = datetime.strptime(date_str, "%d-%m-%Y")
+def fold_line(line):
+    """RFC 5545 §3.1 – fold long lines at 75 octets, continuation with CRLF + space."""
+    parts = []
+    while len(line.encode("utf-8")) > 75:
+        i = 75
+        while len(line[:i].encode("utf-8")) > 75:
+            i -= 1
+        parts.append(line[:i])
+        line = " " + line[i:]
+    parts.append(line)
+    return "\r\n".join(parts)
 
-    day_id = date_str.replace("-", "")
 
-    # --- FAJR BLOCK ---
-    fajr_end = add_minutes(fajr, 20)
-    cal += event(f"{day_id}-fajr", "Fajr Prayer", fajr, fajr_end)
+def valarm_block(trigger_mins, message):
+    """Build a VALARM component that fires a popup notification."""
+    if trigger_mins < 0:
+        trigger = f"-PT{abs(trigger_mins)}M"
+    elif trigger_mins == 0:
+        trigger = "PT0S"
+    else:
+        trigger = f"PT{trigger_mins}M"
+    return "\r\n".join([
+        "BEGIN:VALARM",
+        "ACTION:DISPLAY",
+        f"TRIGGER:{trigger}",
+        fold_line(f"DESCRIPTION:{ics_escape(message)}"),
+        "END:VALARM",
+    ])
 
-    adhkar_am_end = add_minutes(fajr_end, 15)
-    cal += event(f"{day_id}-adhkar-am", "Morning Dhikr", fajr_end, adhkar_am_end)
 
-    quran_am_end = add_minutes(adhkar_am_end, 20)
-    cal += event(f"{day_id}-quran-am", "Quran Study", adhkar_am_end, quran_am_end)
+def build_event(uid, key, start, end):
+    """Build a complete VEVENT block with description and VALARM notifications."""
+    c = CONTENT[key]
+    lines = [
+        "BEGIN:VEVENT",
+        # UID must be globally unique – scoped to our domain (RFC 5545 §3.8.4.7)
+        fold_line(f"UID:{uid}@{UID_DOMAIN}"),
+        # DTSTAMP = UTC time this entry was generated, NOT the event time (RFC 5545 §3.8.7.2)
+        f"DTSTAMP:{NOW_UTC}",
+        fold_line(f"SUMMARY:{ics_escape(c['summary'])}"),
+        f"DTSTART;TZID=Europe/Stockholm:{fmt(start)}",
+        f"DTEND;TZID=Europe/Stockholm:{fmt(end)}",
+        f"CATEGORIES:{c['category']}",
+        f"PRIORITY:{c['priority']}",
+        "STATUS:CONFIRMED",
+        "TRANSP:OPAQUE",
+        fold_line(f"DESCRIPTION:{ics_escape(c['description'])}"),
+    ]
+    for trigger_mins, message in c["alarms"]:
+        lines.append(valarm_block(trigger_mins, message))
+    lines.append("END:VEVENT")
+    return "\r\n".join(lines)  # RFC 5545 §3.1 mandates CRLF line endings
 
-    # --- SCHOOL DROP ---
-    school_drop = base_date.replace(hour=8, minute=0)
-    cal += event(f"{day_id}-school-drop", "School Drop", school_drop, add_minutes(school_drop, 10))
 
-    # --- DHUHR ---
-    dhuhr_end = add_minutes(dhuhr, 25)
-    cal += event(f"{day_id}-dhuhr", "Dhuhr Prayer", dhuhr, dhuhr_end)
+# ── Calendar generation ────────────────────────────────────────────────────────
 
-    # --- SCHOOL PICKUP ---
-    school_pick = base_date.replace(hour=14, minute=0)
-    cal += event(f"{day_id}-school-pick", "School Pickup", school_pick, add_minutes(school_pick, 10))
+parts = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Daily Deen Routine - Malmo//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "X-WR-CALNAME:Daily Deen Routine",
+    "X-WR-TIMEZONE:Europe/Stockholm",
+    VTIMEZONE,
+]
 
-    # --- ASR ---
-    asr_end = add_minutes(asr, 20)
-    cal += event(f"{day_id}-asr", "Asr Prayer", asr, asr_end)
+for month in range(1, 13):   # January – December 2026 (full year)
+    url = (
+        f"https://api.aladhan.com/v1/calendar/{YEAR}/{month}"
+        f"?latitude={LAT}&longitude={LON}&method={METHOD}"
+    )
+    data = requests.get(url).json()["data"]
 
-    # --- FAMILY TIME (AFTER ASR → BEFORE MAGHRIB) ---
-    family_start = asr_end
-    family_end = add_minutes(family_start, 90)  # 1.5 hours
+    for d in data:
+        date_str = d["date"]["gregorian"]["date"]
+        t = d["timings"]
 
-    # Make sure it doesn't overlap Maghrib
-    if family_end > maghrib:
-        family_end = maghrib
+        fajr    = to_dt(date_str, t["Fajr"])
+        dhuhr   = to_dt(date_str, t["Dhuhr"])
+        asr     = to_dt(date_str, t["Asr"])
+        maghrib = to_dt(date_str, t["Maghrib"])
+        isha    = to_dt(date_str, t["Isha"])
 
-    cal += event(f"{day_id}-family", "Family Time", family_start, family_end)
+        base_date = datetime.strptime(date_str, "%d-%m-%Y")
+        day_id    = date_str.replace("-", "")
+        weekday   = base_date.weekday()   # 0=Mon … 6=Sun
 
-    # --- MAGHRIB ---
-    maghrib_end = add_minutes(maghrib, 20)
-    cal += event(f"{day_id}-maghrib", "Maghrib Prayer", maghrib, maghrib_end)
+        # ── Fajr block ────────────────────────────────────────────────────────
+        fajr_end = add_min(fajr, 25)
+        parts.append(build_event(f"{day_id}-fajr", "fajr", fajr, fajr_end))
 
-    # --- ISHA ---
-    isha_end = add_minutes(isha, 20)
-    cal += event(f"{day_id}-isha", "Isha Prayer", isha, isha_end)
+        adhkar_am_end = add_min(fajr_end, 20)
+        parts.append(build_event(f"{day_id}-adhkar-am", "adhkar-am", fajr_end, adhkar_am_end))
 
-    # --- EVENING ADHKAR ---
-    adhkar_pm_end = add_minutes(isha_end, 15)
-    cal += event(f"{day_id}-adhkar-pm", "Evening Dhikr", isha_end, adhkar_pm_end)
+        quran_am_end = add_min(adhkar_am_end, 20)
+        parts.append(build_event(f"{day_id}-quran-am", "quran-am", adhkar_am_end, quran_am_end))
 
-cal += "END:VCALENDAR"
+        # ── School drop (daily 08:00) ─────────────────────────────────────────
+        school_drop = base_date.replace(hour=8, minute=0)
+        parts.append(build_event(f"{day_id}-school-drop", "school-drop", school_drop, add_min(school_drop, 10)))
 
-with open(OUTPUT_FILE, "w") as f:
-    f.write(cal)
+        # ── Dhuhr ─────────────────────────────────────────────────────────────
+        dhuhr_end = add_min(dhuhr, 20)
+        parts.append(build_event(f"{day_id}-dhuhr", "dhuhr", dhuhr, dhuhr_end))
 
-print(f"Generated {OUTPUT_FILE}")
+        # ── School pickup (daily 14:00) ───────────────────────────────────────
+        school_pick = base_date.replace(hour=14, minute=0)
+        parts.append(build_event(f"{day_id}-school-pick", "school-pick", school_pick, add_min(school_pick, 10)))
+
+        # ── Kids Dars (Tuesday & Thursday 15:00–16:00) ───────────────────────
+        if weekday in (1, 3):
+            kids_dars = base_date.replace(hour=15, minute=0)
+            parts.append(build_event(f"{day_id}-kids-dars", "kids-dars", kids_dars, add_min(kids_dars, 60)))
+
+        # ── Asr ───────────────────────────────────────────────────────────────
+        asr_end = add_min(asr, 20)
+        parts.append(build_event(f"{day_id}-asr", "asr", asr, asr_end))
+
+        # ── Post-Asr Quran (25 min) ───────────────────────────────────────────
+        quran_pm_end = add_min(asr_end, 25)
+        parts.append(build_event(f"{day_id}-quran-pm", "quran-pm", asr_end, quran_pm_end))
+
+        # ── Family time (90 min, capped before Maghrib) ───────────────────────
+        family_start = quran_pm_end
+        family_end   = add_min(family_start, 90)
+        if family_end > maghrib:
+            family_end = maghrib
+        parts.append(build_event(f"{day_id}-family", "family", family_start, family_end))
+
+        # ── Maghrib ───────────────────────────────────────────────────────────
+        maghrib_end = add_min(maghrib, 20)
+        parts.append(build_event(f"{day_id}-maghrib", "maghrib", maghrib, maghrib_end))
+
+        # ── Azkar Masah (20 min after Maghrib) ───────────────────────────────
+        adhkar_pm_end = add_min(maghrib_end, 20)
+        parts.append(build_event(f"{day_id}-adhkar-pm", "adhkar-pm", maghrib_end, adhkar_pm_end))
+
+        # ── Isha ──────────────────────────────────────────────────────────────
+        isha_end = add_min(isha, 20)
+        parts.append(build_event(f"{day_id}-isha", "isha", isha, isha_end))
+
+        # ── Gym (Friday & Sunday after Isha) ─────────────────────────────────
+        if weekday in (4, 6):
+            parts.append(build_event(f"{day_id}-gym", "gym", isha_end, add_min(isha_end, 60)))
+
+parts.append("END:VCALENDAR")
+
+# RFC 5545 §3.1: CRLF line endings; newline='' so Python doesn't add extra CR
+with open(OUTPUT_FILE, "w", encoding="utf-8", newline="") as f:
+    f.write("\r\n".join(parts) + "\r\n")
+
+print(f"Generated {OUTPUT_FILE} — full year {YEAR}, 365 days")
