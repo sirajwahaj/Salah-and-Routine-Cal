@@ -9,6 +9,16 @@ METHOD = 3       # Muslim World League (standard for Europe)
 OUTPUT_FILE = "malmo-sweden.ics"
 UID_DOMAIN = "deen-routine.malmo"   # globally-unique UID scope (RFC 5545 §3.8.4.7)
 
+# Apple Calendar / iOS 17+ colour support (X-APPLE-DEFAULT-ALARM extension)
+# Standard COLOR property per RFC 7986 §5.9 – values are CSS colour names
+COLORS = {
+    "PRAYER":    "teal",
+    "WORSHIP":   "blue",
+    "FAMILY":    "orange",
+    "EDUCATION": "purple",
+    "HEALTH":    "red",
+}
+
 # Single UTC stamp for the whole generation run (RFC 5545 §3.8.7.2)
 NOW_UTC = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
@@ -261,6 +271,27 @@ CONTENT = {
             (0, "Gym time - a strong believer is better!"),
         ],
     ),
+    "jumu'ah": dict(
+        summary="Jumu'ah Prayer 🕌",
+        category="PRAYER",
+        priority=1,
+        description=(
+            "يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَىٰ ذِكْرِ اللَّهِ\n"
+            "O you who believe! When the call to prayer is made on Friday,\n"
+            "hasten to the remembrance of Allah. (62:9)\n\n"
+            "• Perform ghusl (ritual bath)\n"
+            "• Wear clean clothes & apply perfume\n"
+            "• Recite Surah Al-Kahf (18)\n"
+            "• Send abundant salawat on the Prophet ﷺ\n"
+            "• Arrive early to the masjid\n\n"
+            "2 Rak'ah Sunnah before Khutbah + 2 Rak'ah Fard"
+        ),
+        alarms=[
+            (-30, "Jumu'ah in 30 min — perform ghusl and prepare"),
+            (-10, "Jumu'ah in 10 minutes — head to the masjid now!"),
+            (0,   "JUMU'AH TIME — Allahu Akbar! Hasten to the prayer."),
+        ],
+    ),
 }
 
 
@@ -334,6 +365,7 @@ def build_event(uid, key, start, end):
         f"DTEND;TZID=Europe/Stockholm:{fmt(end)}",
         f"CATEGORIES:{c['category']}",
         f"PRIORITY:{c['priority']}",
+        f"COLOR:{COLORS.get(c['category'], 'teal')}",
         "STATUS:CONFIRMED",
         "TRANSP:OPAQUE",
         fold_line(f"DESCRIPTION:{ics_escape(c['description'])}"),
@@ -392,9 +424,12 @@ for month in range(1, 13):   # January – December 2026 (full year)
         school_drop = base_date.replace(hour=8, minute=0)
         parts.append(build_event(f"{day_id}-school-drop", "school-drop", school_drop, add_min(school_drop, 10)))
 
-        # ── Dhuhr ─────────────────────────────────────────────────────────────
+        # ── Dhuhr (or Jumu'ah on Friday) ─────────────────────────────────────
         dhuhr_end = add_min(dhuhr, 20)
-        parts.append(build_event(f"{day_id}-dhuhr", "dhuhr", dhuhr, dhuhr_end))
+        if weekday == 4:   # Friday → Jumu'ah replaces Dhuhr
+            parts.append(build_event(f"{day_id}-jumuah", "jumu'ah", dhuhr, dhuhr_end))
+        else:
+            parts.append(build_event(f"{day_id}-dhuhr", "dhuhr", dhuhr, dhuhr_end))
 
         # ── School pickup (daily 14:00) ───────────────────────────────────────
         school_pick = base_date.replace(hour=14, minute=0)
