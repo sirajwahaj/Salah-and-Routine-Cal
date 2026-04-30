@@ -78,6 +78,7 @@
       .badge-health  { background: #450a0a; color: #fca5a5; }
       .card { border-color: #1f2937; }
       .instructions-body { border-color: #166534; }
+      .stat-item { border-color: #166534; }
     }
 
     /* ── Header with Islamic geometric pattern ── */
@@ -319,6 +320,35 @@
     footer a:hover { text-decoration: underline; }
     .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; margin-bottom: 12px; }
 
+    /* ── Stats grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .stat-item {
+      background: var(--light);
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 1.7rem;
+      font-weight: 900;
+      color: var(--green);
+      line-height: 1.1;
+      letter-spacing: -.03em;
+    }
+    .stat-label {
+      font-size: .72rem;
+      color: var(--muted);
+      font-weight: 600;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
     /* ── Prayer times grid ── */
     .prayer-grid {
       display: grid;
@@ -366,6 +396,7 @@
       header { padding: 48px 16px 72px; }
       .card  { padding: 22px 16px; }
       .btn   { padding: 14px 16px; font-size: .92rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
@@ -898,16 +929,50 @@
     </div>
   </div>
 
+  <!-- ── Stats card ── -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📊</span> Calendar stats</div>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-num">365</div>
+        <div class="stat-label">Days covered</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">~4,700</div>
+        <div class="stat-label">Total events</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">1,825</div>
+        <div class="stat-label">Prayer events</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">52</div>
+        <div class="stat-label">Jumu'ah prayers</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">11</div>
+        <div class="stat-label">Islamic holidays</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">104</div>
+        <div class="stat-label">Gym sessions</div>
+      </div>
+    </div>
+    <div class="note" style="margin-top:16px">
+      Calendar auto-refreshes on the <strong>1st of every month</strong> via GitHub Actions.
+      Prayer times are recalculated from the AlAdhan API with fresh data each cycle.
+    </div>
+  </div>
+
 </main>
 
 <footer>
-  <p>
-    <a href="https://github.com/sirajwahaj/Salah-and-Routine-Cal">View source on GitHub</a>
-    &nbsp;·&nbsp;
-    Prayer data: <a href="https://aladhan.com" target="_blank" rel="noopener">AlAdhan API</a>
-    &nbsp;·&nbsp;
-    RFC 5545 iCalendar
-  </p>
+  <div class="footer-links">
+    <a href="https://github.com/sirajwahaj/Salah-and-Routine-Cal" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://aladhan.com" target="_blank" rel="noopener">Prayer data: AlAdhan API</a>
+    <a href="https://sirajwahaj.github.io/Salah-and-Routine-Cal/malmo-sweden.ics">Raw .ics</a>
+  </div>
+  <p>RFC&nbsp;5545 · RFC&nbsp;7986 · Malmö 2026 &nbsp;·&nbsp; بارك الله فيكم</p>
 </footer>
 
 <script>
