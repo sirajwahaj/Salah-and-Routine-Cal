@@ -4,16 +4,461 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Daily Deen Routine — Malmö 2026</title>
-  <meta name="description" content="Full-year 2026 Islamic daily routine calendar for Malmö, Sweden. Import to Google Calendar or iPhone with one tap." />
+  <meta name="description" content="Full-year 2026 Islamic daily routine calendar for Malmö, Sweden. Prayer times, Azkar, Quran, Family & Gym. Import to iPhone or Google Calendar in one tap." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Daily Deen Routine — Malmö 2026" />
+  <meta property="og:description" content="Full-year Islamic routine calendar. Prayer times · Azkar · Quran · Family · Gym. One-tap import for iPhone & Google Calendar." />
+  <meta property="og:url" content="https://sirajwahaj.github.io/Salah-and-Routine-Cal/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://sirajwahaj.github.io/Salah-and-Routine-Cal/og-cover.png" />
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Daily Deen Routine — Malmö 2026" />
+  <meta name="twitter:description" content="Full-year Islamic routine calendar. One-tap import for iPhone & Google Calendar." />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://sirajwahaj.github.io/Salah-and-Routine-Cal/" />
+
+  <!-- Favicon (emoji) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕌</text></svg>" />
   <style>
     :root {
-      --green:  #1b6e3a;
-      --light:  #e8f5ee;
-      --gold:   #c8972a;
-      --text:   #1a1a1a;
-      --muted:  #555;
-      --radius: 12px;
+      --green:   #1a6b38;
+      --green2:  #0f4a27;
+      --emerald: #22c55e;
+      --light:   #edfaf3;
+      --gold:    #d4a017;
+      --text:    #111827;
+      --muted:   #6b7280;
+      --surface: #ffffff;
+      --border:  #e5e7eb;
+      --radius:  16px;
+      --shadow:  0 4px 32px rgba(0,0,0,.09);
     }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: #f0fdf4;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header with Islamic geometric pattern ── */
+    header {
+      position: relative;
+      background: linear-gradient(160deg, #0f4a27 0%, #1a6b38 50%, #15803d 100%);
+      color: #fff;
+      text-align: center;
+      padding: 60px 24px 80px;
+      overflow: hidden;
+    }
+    header::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(45deg,  rgba(255,255,255,.04) 0px, rgba(255,255,255,.04) 1px, transparent 1px, transparent 28px),
+        repeating-linear-gradient(-45deg, rgba(255,255,255,.04) 0px, rgba(255,255,255,.04) 1px, transparent 1px, transparent 28px);
+      pointer-events: none;
+    }
+    header::after {
+      content: "";
+      position: absolute;
+      bottom: -2px; left: 0; right: 0;
+      height: 48px;
+      background: #f0fdf4;
+      clip-path: ellipse(55% 100% at 50% 100%);
+    }
+    .header-inner { position: relative; z-index: 1; }
+    .bismillah {
+      font-size: clamp(1.7rem, 5vw, 2.4rem);
+      letter-spacing: .04em;
+      margin-bottom: 16px;
+      opacity: .95;
+      text-shadow: 0 2px 12px rgba(0,0,0,.25);
+      font-weight: 400;
+    }
+    header h1 {
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: -.02em;
+    }
+    .header-sub {
+      font-size: 1rem;
+      opacity: .8;
+      max-width: 420px;
+      margin: 0 auto 20px;
+      line-height: 1.65;
+    }
+    .header-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .chip {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-size: .8rem;
+      font-weight: 600;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 700px;
+      margin: -32px auto 0;
+      padding: 0 16px 64px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 28px 24px;
+      margin-bottom: 20px;
+      animation: fadeUp .45s ease both;
+    }
+    .card:nth-child(2) { animation-delay: .05s; }
+    .card:nth-child(3) { animation-delay: .10s; }
+    .card:nth-child(4) { animation-delay: .15s; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--green);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .icon { font-size: 1.25rem; }
+
+    /* ── Buttons ── */
+    .btn-group { display: flex; flex-direction: column; gap: 10px; }
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 15px 20px;
+      border-radius: 12px;
+      font-size: .97rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: transform .12s, box-shadow .12s, filter .12s;
+      letter-spacing: -.01em;
+    }
+    .btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
+    .btn:active { transform: scale(.98); box-shadow: none; filter: brightness(.9); }
+    .btn-apple  { background: #000; color: #fff; }
+    .btn-google { background: #fff; color: #3c4043; border: 1.5px solid #dadce0; }
+    .btn-google:hover { border-color: #4285f4; }
+    .btn-download { background: var(--green); color: #fff; }
+
+    /* ── URL box ── */
+    .url-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--light);
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-top: 14px;
+    }
+    .url-box code {
+      flex: 1;
+      font-size: .74rem;
+      word-break: break-all;
+      color: var(--green);
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+    .copy-btn {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: .8rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: filter .15s, transform .1s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { filter: brightness(.85); }
+
+    /* ── Instructions accordion ── */
+    details { margin-top: 14px; }
+    summary {
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--green);
+      padding: 8px 0;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    summary::before { content: "▶"; font-size: .65rem; transition: transform .2s; }
+    details[open] summary::before { transform: rotate(90deg); }
+    .instructions-body {
+      font-size: .83rem;
+      color: var(--muted);
+      line-height: 1.7;
+      padding: 10px 0 4px 16px;
+      border-left: 3px solid #bbf7d0;
+    }
+    .instructions-body ol { padding-left: 18px; }
+    .instructions-body li { margin-bottom: 4px; }
+    .instructions-body strong { color: var(--text); }
+
+    /* ── Schedule table ── */
+    .schedule-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+    .schedule { width: 100%; border-collapse: collapse; font-size: .88rem; min-width: 420px; }
+    .schedule thead tr { background: linear-gradient(90deg, var(--green2), var(--green)); }
+    .schedule th {
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: .82rem;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    .schedule td { padding: 9px 14px; border-bottom: 1px solid #f3f4f6; }
+    .schedule tr:last-child td { border-bottom: none; }
+    .schedule tbody tr:hover td { background: #f9fafb; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: .68rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      margin-left: 4px;
+    }
+    .badge-prayer  { background: #dcfce7; color: #14532d; }
+    .badge-worship { background: #e0f2fe; color: #075985; }
+    .badge-family  { background: #fef9c3; color: #713f12; }
+    .badge-edu     { background: #ede9fe; color: #3b0764; }
+    .badge-health  { background: #fee2e2; color: #7f1d1d; }
+
+    /* ── Note ── */
+    .note {
+      font-size: .83rem;
+      color: var(--muted);
+      line-height: 1.65;
+      padding: 12px 16px;
+      background: var(--light);
+      border-left: 3px solid var(--emerald);
+      border-radius: 0 10px 10px 0;
+      margin-top: 16px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: .8rem;
+      padding: 0 16px 40px;
+    }
+    footer a { color: var(--green); text-decoration: none; font-weight: 500; }
+    footer a:hover { text-decoration: underline; }
+    .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; margin-bottom: 12px; }
+
+    @media (max-width: 480px) {
+      header { padding: 48px 16px 72px; }
+      .card  { padding: 22px 16px; }
+      .btn   { padding: 14px 16px; font-size: .92rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <h1>Daily Deen Routine</h1>
+    <p class="header-sub">Full-year 2026 Islamic daily schedule for Malmö, Sweden.</p>
+    <div class="header-chips">
+      <span class="chip">🕌 5 Prayers</span>
+      <span class="chip">📖 Quran Daily</span>
+      <span class="chip">🤲 Azkar</span>
+      <span class="chip">👨‍👩‍👦 Family</span>
+      <span class="chip">🏋️ Gym</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Import card ── -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📲</span> Import to your calendar</div>
+
+    <div class="btn-group">
+      <!-- iPhone / Apple Calendar -->
+      <button class="btn btn-apple" id="btn-apple"
+         onclick="window.location.href='webcal://sirajwahaj.github.io/Salah-and-Routine-Cal/malmo-sweden.ics'">
+        <!-- Apple logo -->
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        </svg>
+        Subscribe on iPhone / Apple Calendar
+      </button>
+
+      <!-- Google Calendar -->
+      <a class="btn btn-google"
+         href="https://www.google.com/calendar/render?cid=webcal%3A%2F%2Fsirajwahaj.github.io%2FSalah-and-Routine-Cal%2Fmalmo-sweden.ics"
+         target="_blank" rel="noopener">
+        <!-- Official Google Calendar icon colours -->
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M19.5 3h-3V1.5h-1.5V3h-9V1.5H4.5V3H1.5A1.5 1.5 0 0 0 0 4.5v15A1.5 1.5 0 0 0 1.5 21h21a1.5 1.5 0 0 0 1.5-1.5v-15A1.5 1.5 0 0 0 22.5 3H19.5z" fill="#1a73e8" opacity=".2"/>
+          <path d="M17.75 11.5h-1.5v1.5h1.5v1.5h-1.5v1.5H18a1.5 1.5 0 0 0 1.5-1.5v-1.5A1.5 1.5 0 0 0 18 11.5h-.25z" fill="#1a73e8"/>
+          <path d="M6 11.5v6h4.5a1.5 1.5 0 0 0 1.5-1.5V13a1.5 1.5 0 0 0-1.5-1.5H7.5V11.5H6zm4.5 3v1.5H7.5V14.5h3z" fill="#34a853"/>
+          <path d="M12 8.5H6v3h1.5V10h3v1.5H12V10h.75A1.5 1.5 0 0 1 14.25 11.5v1A1.5 1.5 0 0 1 12.75 14H12v1.5h.75A3 3 0 0 0 15.75 12.5v-1A3 3 0 0 0 12.75 8.5H12z" fill="#fbbc04"/>
+          <rect x="0" y="0" width="24" height="24" fill="none"/>
+        </svg>
+        Subscribe in Google Calendar
+      </a>
+
+      <!-- Download -->
+      <a class="btn btn-download"
+         href="https://sirajwahaj.github.io/Salah-and-Routine-Cal/malmo-sweden.ics"
+         download="malmo-deen-routine-2026.ics">
+        ⬇&nbsp; Download .ics file
+      </a>
+    </div>
+
+    <!-- Copy URL -->
+    <div class="url-box">
+      <code id="cal-url">https://sirajwahaj.github.io/Salah-and-Routine-Cal/malmo-sweden.ics</code>
+      <button class="copy-btn" onclick="copyUrl(this)">Copy</button>
+    </div>
+
+    <!-- Instructions accordion -->
+    <details>
+      <summary>iPhone / Apple Calendar instructions</summary>
+      <div class="instructions-body">
+        <ol>
+          <li>Tap <strong>"Subscribe on iPhone / Apple Calendar"</strong> above.</li>
+          <li>iOS shows <em>"Open in Calendar?"</em> — tap <strong>Open</strong>.</li>
+          <li>Review the subscription — tap <strong>Add</strong>.</li>
+        </ol>
+        <p style="margin-top:8px"><strong>If the button doesn't open Calendar:</strong> Copy the URL above → <em>Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar</em> → paste → Save.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Google Calendar instructions</summary>
+      <div class="instructions-body">
+        <ol>
+          <li>Click <strong>"Subscribe in Google Calendar"</strong> above.</li>
+          <li>Google Calendar opens — click <strong>Add</strong>.</li>
+          <li>Events appear within a few minutes.</li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary>Android instructions</summary>
+      <div class="instructions-body">
+        <ol>
+          <li>Copy the URL above.</li>
+          <li>Open <strong>Google Calendar app → Settings → Add calendar → From URL</strong>.</li>
+          <li>Paste the URL → tap <strong>Add calendar</strong>.</li>
+        </ol>
+      </div>
+    </details>
+  </div>
+
+  <!-- ── Daily schedule card ── -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🗓</span> Daily schedule</div>
+    <div class="schedule-wrap">
+      <table class="schedule">
+        <thead>
+          <tr><th>Event</th><th>Duration</th><th>When</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Fajr Prayer <span class="badge badge-prayer">PRAYER</span></td><td>25 min</td><td>At Fajr time</td></tr>
+          <tr><td>Azkar Sabah <span class="badge badge-worship">WORSHIP</span></td><td>20 min</td><td>After Fajr</td></tr>
+          <tr><td>Surah Al-Baqara <span class="badge badge-worship">WORSHIP</span></td><td>20 min</td><td>Before sunrise</td></tr>
+          <tr><td>School Drop-off <span class="badge badge-family">FAMILY</span></td><td>10 min</td><td>08:00 daily</td></tr>
+          <tr><td>Dhuhr Prayer <span class="badge badge-prayer">PRAYER</span></td><td>20 min</td><td>At Dhuhr time</td></tr>
+          <tr><td>School Pickup <span class="badge badge-family">FAMILY</span></td><td>10 min</td><td>14:00 daily</td></tr>
+          <tr><td>Kids Dars <span class="badge badge-edu">EDUCATION</span></td><td>60 min</td><td>Tue &amp; Thu 15:00</td></tr>
+          <tr><td>Asr Prayer <span class="badge badge-prayer">PRAYER</span></td><td>20 min</td><td>At Asr time</td></tr>
+          <tr><td>Quran Reading <span class="badge badge-worship">WORSHIP</span></td><td>25 min</td><td>After Asr</td></tr>
+          <tr><td>Family Time <span class="badge badge-family">FAMILY</span></td><td>90 min</td><td>After Quran</td></tr>
+          <tr><td>Maghrib Prayer <span class="badge badge-prayer">PRAYER</span></td><td>20 min</td><td>At Maghrib time</td></tr>
+          <tr><td>Azkar Masah <span class="badge badge-worship">WORSHIP</span></td><td>20 min</td><td>After Maghrib</td></tr>
+          <tr><td>Isha Prayer <span class="badge badge-prayer">PRAYER</span></td><td>20 min</td><td>At Isha time</td></tr>
+          <tr><td>Gym Session <span class="badge badge-health">HEALTH</span></td><td>60 min</td><td>Fri &amp; Sun after Isha</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      Prayer times for <strong>Malmö, Sweden</strong> (55.6050°N, 13.0038°E) using the
+      <strong>Muslim World League</strong> method — standard for European mosques.
+      Times shift every day throughout the year.
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-links">
+    <a href="https://github.com/sirajwahaj/Salah-and-Routine-Cal" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://aladhan.com" target="_blank" rel="noopener">Prayer data: AlAdhan API</a>
+    <a href="https://sirajwahaj.github.io/Salah-and-Routine-Cal/malmo-sweden.ics">Raw .ics</a>
+  </div>
+  <p>RFC&nbsp;5545 iCalendar &nbsp;·&nbsp; Malmö 2026 &nbsp;·&nbsp; بارك الله فيكم</p>
+</footer>
+
+<script>
+  function copyUrl(btn) {
+    const url = document.getElementById("cal-url").textContent.trim();
+    navigator.clipboard.writeText(url).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = "✓ Copied!";
+      btn.style.background = "#16a34a";
+      setTimeout(() => { btn.textContent = orig; btn.style.background = ""; }, 2200);
+    }).catch(() => {
+      // fallback for older browsers
+      const el = document.createElement("textarea");
+      el.value = url;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      btn.textContent = "✓ Copied!";
+      setTimeout(() => { btn.textContent = "Copy"; }, 2200);
+    });
+  }
+</script>
+
+</body>
+</html>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
