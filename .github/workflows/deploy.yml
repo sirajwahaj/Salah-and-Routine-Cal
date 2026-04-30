@@ -1,24 +1,17 @@
-name: Deploy Calendar to GitHub Pages
+name: Refresh Calendar
 
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: "0 0 1 * *"   # Re-fetch prayer times on the 1st of every month
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
+  contents: write   # needed to commit the refreshed .ics back to the repo
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  refresh:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,24 +26,17 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Regenerate calendar from latest prayer times
+      - name: Regenerate calendar
         working-directory: salah-calendar
         run: python generate.py
 
-      - name: Prepare site content
+      - name: Copy refreshed ICS to docs/ (served by GitHub Pages)
+        run: cp salah-calendar/malmo-sweden.ics docs/malmo-sweden.ics
+
+      - name: Commit and push if changed
         run: |
-          mkdir -p _site
-          cp salah-calendar/malmo-sweden.ics _site/malmo-sweden.ics
-          cp docs/index.html _site/index.html
-
-      - name: Setup GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "_site"
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/malmo-sweden.ics salah-calendar/malmo-sweden.ics
+          git diff --cached --quiet || git commit -m "chore(calendar): refresh prayer times [skip ci]"
+          git push
