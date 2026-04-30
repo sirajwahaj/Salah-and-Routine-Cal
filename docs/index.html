@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Deen Routine — Malmö 2026</title>
+  <meta name="description" content="Full-year 2026 Islamic daily routine calendar for Malmö, Sweden. Import to Google Calendar or iPhone with one tap." />
+  <style>
+    :root {
+      --green:  #1b6e3a;
+      --light:  #e8f5ee;
+      --gold:   #c8972a;
+      --text:   #1a1a1a;
+      --muted:  #555;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f7faf8;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--green);
+      color: #fff;
+      text-align: center;
+      padding: 48px 24px 40px;
+    }
+    header .bismillah {
+      font-size: 2rem;
+      letter-spacing: .05em;
+      margin-bottom: 12px;
+      opacity: .9;
+    }
+    header h1 {
+      font-size: clamp(1.5rem, 4vw, 2.4rem);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    header p {
+      font-size: 1rem;
+      opacity: .85;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── Main card ── */
+    main {
+      max-width: 680px;
+      margin: -24px auto 0;
+      padding: 0 16px 60px;
+    }
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      padding: 32px 28px;
+      margin-bottom: 24px;
+    }
+    .card h2 {
+      font-size: 1.15rem;
+      color: var(--green);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2::before { content: attr(data-icon); font-size: 1.3rem; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 15px 20px;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: filter .15s, transform .1s;
+    }
+    .btn:hover  { filter: brightness(.93); }
+    .btn:active { transform: scale(.98); }
+    .btn + .btn { margin-top: 12px; }
+    .btn-apple   { background: #000; color: #fff; }
+    .btn-google  { background: #4285F4; color: #fff; }
+    .btn-download { background: var(--green); color: #fff; }
+    .btn-copy    { background: var(--light); color: var(--green); border: 2px solid var(--green); }
+
+    /* ── URL box ── */
+    .url-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--light);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 16px;
+    }
+    .url-box code {
+      flex: 1;
+      font-size: .78rem;
+      word-break: break-all;
+      color: var(--green);
+    }
+    .copy-btn {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: .8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: filter .15s;
+    }
+    .copy-btn:hover { filter: brightness(.85); }
+
+    /* ── Schedule table ── */
+    .schedule { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    .schedule th {
+      background: var(--green);
+      color: #fff;
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    .schedule th:first-child { border-radius: 8px 0 0 0; }
+    .schedule th:last-child  { border-radius: 0 8px 0 0; }
+    .schedule td { padding: 9px 12px; border-bottom: 1px solid #eee; }
+    .schedule tr:last-child td { border-bottom: none; }
+    .schedule tr:nth-child(even) td { background: #fafafa; }
+    .badge {
+      display: inline-block;
+      font-size: .72rem;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .badge-prayer  { background: #d4edda; color: #155724; }
+    .badge-worship { background: #d1ecf1; color: #0c5460; }
+    .badge-family  { background: #fff3cd; color: #856404; }
+    .badge-edu     { background: #e2d9f3; color: #4a235a; }
+    .badge-health  { background: #fde8d8; color: #7d2e00; }
+
+    /* ── Info notes ── */
+    .note {
+      font-size: .85rem;
+      color: var(--muted);
+      line-height: 1.6;
+      padding: 14px 16px;
+      background: var(--light);
+      border-left: 4px solid var(--green);
+      border-radius: 0 8px 8px 0;
+      margin-top: 16px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: .82rem;
+      padding: 0 16px 32px;
+    }
+    footer a { color: var(--green); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+  <h1>Daily Deen Routine</h1>
+  <p>Full-year 2026 Islamic daily schedule for Malmö, Sweden.<br>
+     Prayer times · Azkar · Quran · Family · Gym</p>
+</header>
+
+<main>
+
+  <!-- ── Import buttons ── -->
+  <div class="card">
+    <h2 data-icon="📲">Import to your calendar</h2>
+
+    <!-- iPhone / Apple Calendar -->
+    <a class="btn btn-apple"
+       href="https://sirajwahaj.github.io/Salah-and-Routine-Cal/malmo-sweden.ics"
+       id="btn-apple">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+      </svg>
+      Add to iPhone / Apple Calendar
+    </a>
+
+    <!-- Google Calendar subscribe -->
+    <a class="btn btn-google"
+       href="https://www.google.com/calendar/render?cid=https://sirajwahaj.github.io/Salah-and-Routine-Cal/malmo-sweden.ics"
+       target="_blank" rel="noopener">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+      </svg>
+      Subscribe in Google Calendar
+    </a>
+
+    <!-- Direct download -->
+    <a class="btn btn-download"
+       href="https://sirajwahaj.github.io/Salah-and-Routine-Cal/malmo-sweden.ics"
+       download="malmo-deen-routine-2026.ics">
+      ⬇ Download .ics file
+    </a>
+
+    <!-- Copy URL -->
+    <div class="url-box">
+      <code id="cal-url">https://sirajwahaj.github.io/Salah-and-Routine-Cal/malmo-sweden.ics</code>
+      <button class="copy-btn" onclick="copyUrl()">Copy</button>
+    </div>
+    <div class="note">
+      <strong>iPhone tip:</strong> Tap "Add to iPhone" above → tap the file when it downloads → tap <em>"Add All"</em> and it imports instantly.<br><br>
+      <strong>Google Calendar tip:</strong> Click "Subscribe in Google Calendar" → confirm → events appear within minutes.
+    </div>
+  </div>
+
+  <!-- ── Daily schedule ── -->
+  <div class="card">
+    <h2 data-icon="🗓">Daily schedule</h2>
+    <table class="schedule">
+      <thead>
+        <tr><th>Event</th><th>Duration</th><th>When</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Fajr Prayer <span class="badge badge-prayer">PRAYER</span></td><td>25 min</td><td>At Fajr time</td></tr>
+        <tr><td>Azkar Sabah <span class="badge badge-worship">WORSHIP</span></td><td>20 min</td><td>After Fajr</td></tr>
+        <tr><td>Surah Al-Baqara <span class="badge badge-worship">WORSHIP</span></td><td>20 min</td><td>Before sunrise</td></tr>
+        <tr><td>School Drop-off <span class="badge badge-family">FAMILY</span></td><td>10 min</td><td>08:00 daily</td></tr>
+        <tr><td>Dhuhr Prayer <span class="badge badge-prayer">PRAYER</span></td><td>20 min</td><td>At Dhuhr time</td></tr>
+        <tr><td>School Pickup <span class="badge badge-family">FAMILY</span></td><td>10 min</td><td>14:00 daily</td></tr>
+        <tr><td>Kids Dars <span class="badge badge-edu">EDUCATION</span></td><td>60 min</td><td>Tue &amp; Thu 15:00</td></tr>
+        <tr><td>Asr Prayer <span class="badge badge-prayer">PRAYER</span></td><td>20 min</td><td>At Asr time</td></tr>
+        <tr><td>Quran Reading <span class="badge badge-worship">WORSHIP</span></td><td>25 min</td><td>After Asr</td></tr>
+        <tr><td>Family Time <span class="badge badge-family">FAMILY</span></td><td>90 min</td><td>After Quran</td></tr>
+        <tr><td>Maghrib Prayer <span class="badge badge-prayer">PRAYER</span></td><td>20 min</td><td>At Maghrib time</td></tr>
+        <tr><td>Azkar Masah <span class="badge badge-worship">WORSHIP</span></td><td>20 min</td><td>After Maghrib</td></tr>
+        <tr><td>Isha Prayer <span class="badge badge-prayer">PRAYER</span></td><td>20 min</td><td>At Isha time</td></tr>
+        <tr><td>Gym Session <span class="badge badge-health">HEALTH</span></td><td>60 min</td><td>Fri &amp; Sun after Isha</td></tr>
+      </tbody>
+    </table>
+    <div class="note">
+      Prayer times calculated for <strong>Malmö, Sweden</strong> (55.6050°N, 13.0038°E)
+      using the <strong>Muslim World League</strong> method — standard for European mosques.
+      Times shift daily as sunrise/sunset changes throughout the year.
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>
+    <a href="https://github.com/sirajwahaj/Salah-and-Routine-Cal">View source on GitHub</a>
+    &nbsp;·&nbsp;
+    Prayer data: <a href="https://aladhan.com" target="_blank" rel="noopener">AlAdhan API</a>
+    &nbsp;·&nbsp;
+    RFC 5545 iCalendar
+  </p>
+</footer>
+
+<script>
+  function copyUrl() {
+    const url = document.getElementById("cal-url").textContent;
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.querySelector(".copy-btn");
+      btn.textContent = "Copied!";
+      setTimeout(() => btn.textContent = "Copy", 2000);
+    });
+  }
+
+  // On mobile Safari, clicking an .ics link triggers native calendar import
+  // On desktop, it downloads. Both are correct.
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS) {
+    document.getElementById("btn-apple").textContent = "📲 Tap to add to Calendar";
+  }
+</script>
+
+</body>
+</html>
