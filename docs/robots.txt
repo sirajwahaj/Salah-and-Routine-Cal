@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sirajwahaj.github.io/Salah-and-Routine-Cal/sitemap.xml

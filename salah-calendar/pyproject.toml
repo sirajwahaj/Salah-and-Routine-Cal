@@ -1,9 +1,13 @@
 [project]
 name = "salah-calendar"
-version = "0.1.0"
-description = "Add your description here"
+version = "1.0.0"
+description = "Full-year Islamic daily routine calendar generator for Malmö, Sweden"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
+license = "MIT"
 dependencies = [
-    "requests>=2.33.1",
+    "requests>=2.28.0",
 ]
+
+[project.scripts]
+salah-calendar = "main:main"

@@ -1,3 +1,5 @@
+import sys
+import time
 import requests
 from datetime import datetime, timedelta, timezone
 
@@ -21,6 +23,11 @@ COLORS = {
 
 # Single UTC stamp for the whole generation run (RFC 5545 §3.8.7.2)
 NOW_UTC = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+# Request settings
+REQUEST_TIMEOUT = 30   # seconds
+MAX_RETRIES = 3
+RETRY_DELAY = 5        # seconds between retries
 
 # ── Timezone definition (Europe/Stockholm – CET/CEST) ─────────────────────────
 VTIMEZONE = """\
@@ -401,6 +408,27 @@ def build_event(uid, key, start, end):
     return "\r\n".join(lines)  # RFC 5545 §3.1 mandates CRLF line endings
 
 
+# ── API helper with retries ────────────────────────────────────────────────────
+
+def fetch_month(year, month):
+    """Fetch prayer times for a given month with retry logic."""
+    url = (
+        f"https://api.aladhan.com/v1/calendar/{year}/{month}"
+        f"?latitude={LAT}&longitude={LON}&method={METHOD}"
+    )
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            resp = requests.get(url, timeout=REQUEST_TIMEOUT)
+            resp.raise_for_status()
+            return resp.json()["data"]
+        except (requests.RequestException, KeyError, ValueError) as e:
+            if attempt == MAX_RETRIES:
+                print(f"ERROR: Failed to fetch month {month} after {MAX_RETRIES} attempts: {e}", file=sys.stderr)
+                raise SystemExit(1)
+            print(f"  Retry {attempt}/{MAX_RETRIES} for month {month}: {e}")
+            time.sleep(RETRY_DELAY)
+
+
 # ── Calendar generation ────────────────────────────────────────────────────────
 
 parts = [
@@ -410,16 +438,20 @@ parts = [
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "X-WR-CALNAME:Daily Deen Routine",
+    "X-WR-CALDESC:Full-year 2026 Islamic daily routine for Malmö Sweden",
     "X-WR-TIMEZONE:Europe/Stockholm",
+    "REFRESH-INTERVAL;VALUE=DURATION:P7D",
     VTIMEZONE,
 ]
 
+print(f"Generating calendar for {YEAR} — Malmö, Sweden")
+print(f"Method: Muslim World League | Lat: {LAT} | Lon: {LON}")
+print()
+
 for month in range(1, 13):   # January – December 2026 (full year)
-    url = (
-        f"https://api.aladhan.com/v1/calendar/{YEAR}/{month}"
-        f"?latitude={LAT}&longitude={LON}&method={METHOD}"
-    )
-    data = requests.get(url).json()["data"]
+    print(f"  Fetching month {month:02d}/12...", end=" ", flush=True)
+    data = fetch_month(YEAR, month)
+    print(f"({len(data)} days)")
 
     for d in data:
         date_str = d["date"]["gregorian"]["date"]
@@ -503,54 +535,49 @@ for month in range(1, 13):   # January – December 2026 (full year)
 
 # ── Islamic holidays 2026 (all-day VEVENT) ────────────────────────────────────
 # Dates are approximations based on moon-sighting; actual dates may shift ±1 day.
+# Based on predicted Hijri-Gregorian conversion for 1447-1448 AH.
 ISLAMIC_HOLIDAYS = [
     # (YYYYMMDD,  summary,                      description)
-    ("20260109", "Islamic New Year 1448 AH 🌙",
+    ("20260627", "Islamic New Year 1448 AH 🌙",
      "Ra's al-Sana al-Hijriyya — Islamic New Year.\n"
      "Reflect on the Hijrah of the Prophet ﷺ from Mecca to Medina."),
-    ("20260119", "Ashura — 10th Muharram 🤲",
+    ("20260706", "Ashura — 10th Muharram 🤲",
      "The Prophet ﷺ fasted on this day and encouraged fasting on\n"
      "9th & 10th Muharram (or 10th & 11th).\n"
      "Fast today and the day before or after."),
-    ("20260319", "Mawlid al-Nabawi ﷺ",
+    ("20260905", "Mawlid al-Nabawi ﷺ",
      "Birthday of the Prophet Muhammad ﷺ — 12th Rabi' al-Awwal.\n"
      "Increase salawat: اللهم صل على محمد وعلى آل محمد"),
-    ("20260319", "Isra wal Mi'raj 🌙",
-     "The Night Journey and Ascension of the Prophet ﷺ.\n"
+    ("20260118", "Isra wal Mi'raj 🌙",
+     "The Night Journey and Ascension of the Prophet ﷺ — 27th Rajab 1447 AH.\n"
      "Pray Qiyam al-Layl tonight and reflect on the gift of Salah."),
-    ("20260218", "Ramadan Begins 🌙",
+    ("20260228", "Ramadan Begins 🌙",
      "First day of Ramadan 1447 AH (approx).\n"
      "رمضان مبارك — May Allah accept our fasting, prayers, and deeds.\n\n"
      "• Pray Tarawih every night\n"
      "• Increase Quran recitation\n"
      "• Give sadaqah generously"),
-    ("20260319", "Last 10 Nights of Ramadan begin ✨",
+    ("20260320", "Last 10 Nights of Ramadan begin ✨",
      "The last 10 nights of Ramadan — seek Laylat al-Qadr.\n"
      "لَيْلَةُ الْقَدْرِ خَيْرٌ مِّنْ أَلْفِ شَهْرٍ\n"
      "Laylat al-Qadr is better than a thousand months. (97:3)\n\n"
      "Pray Qiyam, make I'tikaf if possible, make abundant du'a."),
-    ("20260328", "Laylat al-Qadr (27th Ramadan) ✨",
+    ("20260326", "Laylat al-Qadr (27th Ramadan) ✨",
      "The Night of Power — most likely on the odd nights of the last 10.\n"
      "Pray all night: Allahuma innaka 'afuwwun tuhibbul 'afwa fa'fu 'anni."),
-    ("20260319", "Eid al-Fitr 🎉",
+    ("20260330", "Eid al-Fitr 1447 AH 🎉",
      "عيد الفطر المبارك — Eid Mubarak!\n\n"
      "• Perform ghusl, wear best clothes\n"
      "• Eat before Eid prayer (Sunnah)\n"
      "• Pay Zakat al-Fitr before prayer\n"
      "• Attend Eid prayer at the masjid\n"
      "• Visit family and spread joy"),
-    ("20260527", "Eid al-Fitr 1447 AH 🎉",
-     "عيد الفطر المبارك — Eid Mubarak! (approx date)\n\n"
-     "• Perform ghusl, wear best clothes\n"
-     "• Eat before Eid prayer (Sunnah)\n"
-     "• Pay Zakat al-Fitr before prayer\n"
-     "• Attend Eid prayer at the masjid"),
-    ("20260809", "Day of Arafah 🤲",
+    ("20260606", "Day of Arafah 🤲",
      "9th Dhul Hijjah — the greatest day of the year.\n"
      "Fast today — it expiates sins of the past and coming year.\n"
      "Make abundant du'a, dhikr, and istighfar."),
-    ("20260810", "Eid al-Adha 1447 AH 🐑",
-     "عيد الأضحى المبارك — Eid al-Adha Mubarak! (approx date)\n\n"
+    ("20260607", "Eid al-Adha 1447 AH 🐑",
+     "عيد الأضحى المبارك — Eid al-Adha Mubarak!\n\n"
      "• Perform ghusl, wear best clothes\n"
      "• Do NOT eat before Eid prayer\n"
      "• Attend Eid prayer at the masjid\n"
@@ -560,13 +587,17 @@ ISLAMIC_HOLIDAYS = [
 
 for date_str, summary, description in ISLAMIC_HOLIDAYS:
     uid = f"{date_str}-{summary[:12].lower().replace(' ', '-').replace('/', '')}@{UID_DOMAIN}"
+    # RFC 5545 §3.6.1: DTEND for DATE values must be the next day (exclusive)
+    dt_start = datetime.strptime(date_str, "%Y%m%d")
+    dt_end = dt_start + timedelta(days=1)
+    end_str = dt_end.strftime("%Y%m%d")
     lines = [
         "BEGIN:VEVENT",
         fold_line(f"UID:{uid}"),
         f"DTSTAMP:{NOW_UTC}",
         fold_line(f"SUMMARY:{ics_escape(summary)}"),
         f"DTSTART;VALUE=DATE:{date_str}",
-        f"DTEND;VALUE=DATE:{date_str}",
+        f"DTEND;VALUE=DATE:{end_str}",
         "CATEGORIES:HOLIDAY",
         "COLOR:red",
         "PRIORITY:1",
@@ -582,4 +613,8 @@ parts.append("END:VCALENDAR")
 with open(OUTPUT_FILE, "w", encoding="utf-8", newline="") as f:
     f.write("\r\n".join(parts) + "\r\n")
 
-print(f"Generated {OUTPUT_FILE} — full year {YEAR}, 365 days")
+event_count = "\r\n".join(parts).count("BEGIN:VEVENT")
+print(f"\nGenerated {OUTPUT_FILE}")
+print(f"  Year: {YEAR} | Days: 365 | Events: {event_count}")
+print(f"  Islamic holidays: {len(ISLAMIC_HOLIDAYS)}")
+print("  Done ✓")
