@@ -285,6 +285,49 @@
     footer a:hover { text-decoration: underline; }
     .footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; margin-bottom: 12px; }
 
+    /* ── Prayer times grid ── */
+    .prayer-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 480px) { .prayer-grid { grid-template-columns: repeat(2, 1fr); } }
+    .prayer-item {
+      background: var(--light);
+      border: 1.5px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      text-align: center;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .prayer-item.next-prayer {
+      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+      border-color: var(--emerald);
+      box-shadow: 0 0 0 2px var(--emerald);
+      transform: scale(1.03);
+    }
+    .prayer-item .p-name {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--green);
+      margin-bottom: 4px;
+    }
+    .prayer-item .p-time {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -.02em;
+    }
+    .prayer-item .p-arabic {
+      font-size: .7rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .prayer-item.next-prayer .p-name { color: #14532d; }
+    .prayer-loading { color: var(--muted); font-size: .9rem; text-align: center; padding: 20px 0; grid-column: 1/-1; }
+
     @media (max-width: 480px) {
       header { padding: 48px 16px 72px; }
       .card  { padding: 22px 16px; }
@@ -391,6 +434,18 @@
     </details>
   </div>
 
+  <!-- ── Today's prayer times card ── -->
+  <div class="card" id="prayer-card">
+    <div class="card-title"><span class="icon">🕐</span> Today's Prayer Times <span style="font-size:.75rem;font-weight:400;color:var(--muted);margin-left:4px">Malmö, Sweden</span></div>
+    <div id="prayer-times-grid" class="prayer-grid">
+      <div class="prayer-loading">Loading today's prayer times…</div>
+    </div>
+    <div class="note" style="margin-top:12px">
+      Times are calculated for Malmö using the <strong>Muslim World League</strong> method.
+      The highlighted row is the next upcoming prayer.
+    </div>
+  </div>
+
   <!-- ── Daily schedule card ── -->
   <div class="card">
     <div class="card-title"><span class="icon">🗓</span> Daily schedule</div>
@@ -444,7 +499,6 @@
       btn.style.background = "#16a34a";
       setTimeout(() => { btn.textContent = orig; btn.style.background = ""; }, 2200);
     }).catch(() => {
-      // fallback for older browsers
       const el = document.createElement("textarea");
       el.value = url;
       document.body.appendChild(el);
@@ -455,6 +509,54 @@
       setTimeout(() => { btn.textContent = "Copy"; }, 2200);
     });
   }
+
+  // ── Live prayer times ──────────────────────────────────────────────────────
+  const PRAYERS = [
+    { key: "Fajr",    label: "Fajr",    arabic: "الفجر"   },
+    { key: "Sunrise", label: "Sunrise", arabic: "الشروق"  },
+    { key: "Dhuhr",   label: "Dhuhr",   arabic: "الظهر"   },
+    { key: "Asr",     label: "Asr",     arabic: "العصر"   },
+    { key: "Maghrib", label: "Maghrib", arabic: "المغرب"  },
+    { key: "Isha",    label: "Isha",    arabic: "العشاء"  },
+  ];
+
+  async function loadPrayerTimes() {
+    const grid = document.getElementById("prayer-times-grid");
+    try {
+      const now   = new Date();
+      const d     = now.getDate(), m = now.getMonth() + 1, y = now.getFullYear();
+      const url   = `https://api.aladhan.com/v1/timings/${d}-${m}-${y}?latitude=55.6050&longitude=13.0038&method=3`;
+      const resp  = await fetch(url);
+      if (!resp.ok) throw new Error("API error");
+      const json  = await resp.json();
+      const times = json.data.timings;
+
+      // Determine next prayer
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      let nextKey = null;
+      for (const p of PRAYERS) {
+        if (p.key === "Sunrise") continue;
+        const [h, mn] = times[p.key].split(":").map(Number);
+        if (h * 60 + mn > nowMins) { nextKey = p.key; break; }
+      }
+      if (!nextKey) nextKey = "Fajr"; // after Isha, next is tomorrow's Fajr
+
+      grid.innerHTML = PRAYERS.map(p => {
+        const raw  = (times[p.key] || "").split(" ")[0]; // strip timezone
+        const isNext = p.key === nextKey;
+        return `
+          <div class="prayer-item${isNext ? " next-prayer" : ""}">
+            <div class="p-name">${p.label}${isNext ? " ⬅ next" : ""}</div>
+            <div class="p-time">${raw}</div>
+            <div class="p-arabic">${p.arabic}</div>
+          </div>`;
+      }).join("");
+    } catch (e) {
+      grid.innerHTML = `<div class="prayer-loading">Could not load prayer times — check your connection.</div>`;
+    }
+  }
+
+  loadPrayerTimes();
 </script>
 
 </body>
